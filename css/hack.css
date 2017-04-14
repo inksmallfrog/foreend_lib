@@ -1,0 +1,70 @@
+/*
+* @Author: inksmallfrog
+* @Date:   2017-03-06 16:21:14
+* @Last Modified by:   inksmallfrog
+* @Last Modified time: 2017-03-06 16:33:57
+*/
+
+/* webkit-kernel */
+@media screen and (-webkit-min-device-pixel-ratio:0){
+    /* CSS here */
+}
+
+/* firefox */
+ @-moz-document url-prefix(){
+    /* CSS here */
+}
+
+/* IE8/9/10/11 */
+@media screen\0{
+    /* CSS here */
+}
+
+/* IE9/10 */
+/*
+attribute: value\9\0;
+eg.
+.test{
+    display: none\9\0;
+}
+*/
+
+/* IE6/7/8 */
+@media \0screen\, screen\9{
+    /* CSS here */
+}
+
+/* IE8 */
+@media \0screen{
+    /* CSS here */
+}
+
+/* IE6/7 */
+/*
+*attribute: value;
+eg.
+.test{
+    *display: none\9\0;
+}
+*/
+
+/* IE6*/
+/*
+_attribute: value;
+eg.
+.test{
+    _color: red;
+}
+*/
+
+/* IE7 */
+/*
+*attribute: value_for_ie6/7;
+_attribute: value_for_ie6;
+eg.
+.test{
+    *color: green;
+    _color: red;
+}
+*/
+

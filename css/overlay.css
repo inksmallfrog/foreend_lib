@@ -1,0 +1,15 @@
+/*
+* @Author: inksmallfrog
+* @Date:   2017-04-04 16:07:14
+* @Last Modified by:   inksmallfrog
+* @Last Modified time: 2017-04-04 16:08:54
+*/
+.overlay{
+    background-color: rgba(100, 100, 100, 0.6);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999;
+}
