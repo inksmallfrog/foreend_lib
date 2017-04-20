@@ -1,0 +1,63 @@
+/*
+* @Author: inksmallfrog
+* @Date:   2017-04-19 08:48:39
+* @Last Modified by:   inksmallfrog
+* @Last Modified time: 2017-04-20 22:40:10
+*/
+$h_range_height: 16px;
+$h_range_track_height: 10px; /*for mouseevent*/
+$h_visible_track_height: 4px;
+$loaded_line_color: #3c7;
+$track_line_color: #999;
+$point_size: 12px;
+$point_border_color: white;
+$point_border_size: 4px;
+$point_center_color: #3c7;
+
+.range.horizental{
+    position: relative;
+    display: inline-block;
+    height: $h_range_height;
+    vertical-align: middle;
+    background: none;
+    .track{
+        position: absolute;
+        height: $h_range_track_height;
+        top: 50%;
+        margin-top: -1 * $h_range_track_height / 2;
+        width: 100%;
+    }
+    .visible_line{
+        position: absolute;
+        height: $h_visible_track_height;
+        top: 50%;
+        left: 0;
+        border-radius: 10px;
+        margin-top: -1 * $h_visible_track_height / 2;
+    }
+    .loaded_line{
+        @extend .visible_line;
+        width: 0;
+        background-color: $loaded_line_color;
+        z-index: 1;
+    }
+    .track_line{
+        @extend .visible_line;
+        width: 100%;
+        background-color: $track_line_color;
+        z-index: 0;
+    }
+    .point{
+        box-sizing: border-box;
+        position: absolute;
+        height: $point_size;
+        width: $point_size;
+        top: 50%;
+        margin-top: -1 * $point_size / 2;
+        left: $point_size / 2;
+        border-radius: 100%;
+        border: $point_border_color solid $point_border_size;
+        background: $point_center_color;
+        z-index:2;
+    }
+}

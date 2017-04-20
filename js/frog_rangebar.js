@@ -2,7 +2,7 @@
 * @Author: inksmallfrog
 * @Date:   2017-04-14 06:49:26
 * @Last Modified by:   inksmallfrog
-* @Last Modified time: 2017-04-20 17:32:46
+* @Last Modified time: 2017-04-20 22:31:41
 */
 
 'use strict';
@@ -43,7 +43,7 @@ let Rangebar = function(){
         min = arguments[5];
 
     this.direction = direction ? direction : 'horizental';
-    this.view = this.buildRangebar($(id));
+    this.$view = this.buildRangebar($(id));
 
     Object.defineProperty(this, 'maxValue', {
         get: function(){ return this.max; },
@@ -64,7 +64,7 @@ let Rangebar = function(){
     Object.defineProperty(this, 'currentValue', {
         get: function(){return this.value},
         set: function(value){
-            this.pointTo(value); //set value without callback
+            this.pointTo(value);
         }
     })
 
@@ -73,13 +73,13 @@ let Rangebar = function(){
 
     this.ondragged = false;
 
-    this.view.bind("mousemove", (e) => {
-        this.view.trigger("mouseoverrange", [this.posToValue(this.relativePos(e)),
+    this.$view.bind("mousemove", (e) => {
+        this.$view.trigger("mouseoverrange", [this.posToValue(this.relativePos(e)),
                                             this.relativePos(e),
                                             this.direction == "horizental" ? e.pageX : e.pageY]);
     });
-    this.view.bind("mouseout", (e) => {
-        this.view.trigger("mouseoutrange", [this.posToValue(this.relativePos(e)),
+    this.$view.bind("mouseout", (e) => {
+        this.$view.trigger("mouseoutrange", [this.posToValue(this.relativePos(e)),
                                            this.relativePos(e),
                                            this.direction == "horizental" ? e.pageX : e.pageY]);
     });
@@ -96,16 +96,16 @@ Rangebar.prototype.pointTo = function(value, need_callback){
 }
 
 Rangebar.prototype.loadedTo = function(value){
-    let $loaded_line = this.view.children('.track').children('.loaded_line');
+    let $loaded_line = this.$view.children('.track').children('.loaded_line');
     let percentPos = (value / this.max) * 100;
     $loaded_line.css('width', percentPos + '%');
 }
 
 Rangebar.prototype.bindEvent = function(event, callback, need_clear_old){
     if(need_clear_old){
-        this.view.unbind(event);
+        this.$view.unbind(event);
     }
-    this.view.bind(event, callback);
+    this.$view.bind(event, callback);
 }
 
 Rangebar.prototype.buildRangebar = function($range_view){
@@ -155,23 +155,23 @@ Rangebar.prototype.pointToPos = function(p0, p1, p2){
         value = p1;
         need_callback = p2;
     }
-    let point = this.view.children('.point');
+    let point = this.$view.children('.point');
     this.setPointPos(pos);
     if(value === undefined || value === null){
         this.value = this.posToValue(pos);
     }
     if(need_callback === undefined || need_callback){
-        this.view.trigger("pointchange", this.value);
+        this.$view.trigger("pointchange", this.value);
     }
 }
 Rangebar.prototype.setPointPos = function(pos){
-    var point = this.view.children('.point');
+    var point = this.$view.children('.point');
     if(this.direction == "horizental") point.css('left', pos - point.width() / 2 + 'px');
     else point.css('top', pos - point.height() / 2 + 'px');
 }
 Rangebar.prototype.getWidgetLength = function(){
-    if(this.direction == "horizental") return Math.floor(this.view.width());
-    else return Math.floor(this.view.height());
+    if(this.direction == "horizental") return Math.floor(this.$view.width());
+    else return Math.floor(this.$view.height());
 }
 
 Rangebar.prototype.valueToPos = function(value){
@@ -184,7 +184,7 @@ Rangebar.prototype.posToValue = function(pos){
 
 Rangebar.prototype.relativePos = function(e){
     var res = 0;
-    if(this.direction == "horizental") res = e.pageX - this.view.offset().left;
-    else res = e.pageY - this.view.offset().top;
+    if(this.direction == "horizental") res = e.pageX - this.$view.offset().left;
+    else res = e.pageY - this.$view.offset().top;
     return Math.max(Math.min(res, this.getWidgetLength()), 0);
 }
