@@ -2,38 +2,49 @@
 * @Author: inksmallfrog
 * @Date:   2017-04-14 06:49:26
 * @Last Modified by:   inksmallfrog
-* @Last Modified time: 2017-04-14 16:33:53
+* @Last Modified time: 2017-04-20 17:32:46
 */
 
 'use strict';
-var Rangebar = function(){
-    var id, max, direction, defaultValue, valuechange, mouseover, mouseout;
+/*
+constructor:
+    Rangebar(id [, direction = \'horizental\', posValue=0, loadedValue=0, max=100, min=0])
+
+Interfaces:
+    pointTo(value [, need_onpointchange = true])
+    loadedTo(value)
+    bindEvent(event, onpointchage[, need_clear_old = false])
+
+Attributes:
+    maxValue,
+    minValue,
+    currentValue,
+    loadedValue
+
+Event: pointchange(e, value)
+       trigger: 1. call pointTo(value [, need_callback = true])
+                2. call pointToPos(pos [[, value], need_callback = true])
+       mouseoverrange(e, value, pos, pos_in_page)
+       trigger: onmouseover
+       mouseoutrange(e, value, pos, pos_in_page)
+       trigger: onmouseout
+ */
+let Rangebar = function(){
     if(arguments.length < 1){
-        console.log('Error arguments for calling Rangebar()\n' +
-            'eg. new Rangebar(id)\n' +
-            '    new Rangebar(id, maxValue)\n' +
-            '    new Rangebar(id, maxValue, onvaluechange)\n' +
-            '    new Rangebar(id, maxValue, defaultValue, onvaluechange)\n' +
-            '    new Rangebar(id, maxValue, defaultValue, onvaluechange, onmouseover, onmouseout)\n' +
-            '    new Rangebar(id, maxValue, defaultValue, direction, onvaluechange, onmouseover, onmouseout)\n');
+        console.log('Error arguments for construct Rangebar\n' +
+            'usage: new Rangebar(id [, direction = \'horizental\', posValue=0, loadedValue=0, max=100, min=0])\n');
         return null;
     }
-    if(arguments.length == 1){ id = arguments[0];}
-    if(arguments.length >= 2){ id = arguments[0]; max = arguments[1]; }
-    if(arguments.length == 3){ valuechange = arguments[2]; }
-    if(arguments.length >= 4){ defaultValue = arguments[2]; valuechange = arguments[3]; }
-    if(arguments.length >= 6){ mouseover = arguments[4]; mouseout = arguments[5]; }
-    if(arguments.length >= 7){ direction = arguments[3]; onvaluechange = arguments[4];
-        mouseover = arguments[5]; mouseout = arguments[6];}
-    if(!max) max = 100;
-    if(!defaultValue) defaultValue = 0;
-    if(!direction) direction = "horizental";
-    if(!valuechange) valuechange = function(){};
-    if(!mouseover) mouseover = function(){};
-    if(!mouseout) mouseout = function(){};
+    let id = arguments[0],
+        direction = arguments[1],
+        posValue = arguments[2],
+        loadedValue = arguments[3],
+        max = arguments[4],
+        min = arguments[5];
 
-    this.direction = direction;
-    this.el = this.buildRangebar($(id));
+    this.direction = direction ? direction : 'horizental';
+    this.view = this.buildRangebar($(id));
+
     Object.defineProperty(this, 'maxValue', {
         get: function(){ return this.max; },
         set: function(max){
@@ -52,116 +63,128 @@ var Rangebar = function(){
     });
     Object.defineProperty(this, 'currentValue', {
         get: function(){return this.value},
-        set: function(value){this.pointto(value);}
+        set: function(value){
+            this.pointTo(value); //set value without callback
+        }
     })
-    this.maxValue = max;
-    this.minValue = 0;
+
+    this.maxValue = max ? max : 100;
+    this.minValue = min ? min : 0;
+
     this.ondragged = false;
-    this.el.bind("valuechange", valuechange);
-    this.el.bind("range_mouseover", mouseover);
-    this.el.bind("range_mouseout", mouseout);
-    var self = this;
-    this.el.bind("mousemove", function(e){
-        self.el.trigger("range_mouseover", [self.postovalue(self.relativePos(e)),
-                                            self.relativePos(e),
-                                            self.direction == "horizental" ? e.pageX : e.pageY]);
+
+    this.view.bind("mousemove", (e) => {
+        this.view.trigger("mouseoverrange", [this.posToValue(this.relativePos(e)),
+                                            this.relativePos(e),
+                                            this.direction == "horizental" ? e.pageX : e.pageY]);
     });
-    this.el.bind("mouseout", function(e){
-        self.el.trigger("range_mouseout", [self.postovalue(self.relativePos(e)),
-                                           self.relativePos(e),
-                                           self.direction == "horizental" ? e.pageX : e.pageY]);
+    this.view.bind("mouseout", (e) => {
+        this.view.trigger("mouseoutrange", [this.posToValue(this.relativePos(e)),
+                                           this.relativePos(e),
+                                           this.direction == "horizental" ? e.pageX : e.pageY]);
     });
-    this.currentValue =  defaultValue;
+    this.currentValue = posValue ? posValue : 0;
+
+    $(window).bind('resize', ()=>{
+        this.pointTo(this.currentValue, false);
+    })
 };
 
-Rangebar.prototype.buildRangebar = function(range){
-    range.addClass('range').addClass(this.direction).addClass('pointer');
-    var self = this;
-    range.bind("click", function(e){
-             self.pointtoPos(self.relativePos(e));
-         })
-         .bind("mousemove", function(e){
-             if(self.ondragged){
-                 self.pointtoPos(self.relativePos(e), false); // don't call callback until drag finished
-             }
-         })
-         .bind("mouseout", function(e){
-            if(self.ondragged) {
-                self.pointtoPos(self.relativePos(e));
-                self.ondragged = false;
-            }
-         });
-    var track = $('<div></div>').addClass('track');
-    track.append($('<div></div>').addClass('loaded_line')).append($('<div></div>').addClass('track_line'));
-    var point = $('<div></div>').addClass('point');
-    point.bind("mousedown", function(e){
-            self.ondragged = true;
-         })
-         .bind("mouseup", function(e){
-            self.pointtoPos(self.relativePos(e));
-            self.ondragged = false;
-         })
-         .bind("mouseout", function(e){
-            if(self.ondragged) {
-                self.pointtoPos(self.relativePos(e));
-                self.ondragged = false;
-            }
-         })
-
-    range.append(track).append(point);
-    return range;
+Rangebar.prototype.pointTo = function(value, need_callback){
+    this.value = value;
+    this.pointToPos(this.valueToPos(value), value, need_callback);
 }
 
-Rangebar.prototype.pointtoPos = function(p0, p1, p2){
-    var pos, value, needcallback;
+Rangebar.prototype.loadedTo = function(value){
+    let $loaded_line = this.view.children('.track').children('.loaded_line');
+    let percentPos = (value / this.max) * 100;
+    $loaded_line.css('width', percentPos + '%');
+}
+
+Rangebar.prototype.bindEvent = function(event, callback, need_clear_old){
+    if(need_clear_old){
+        this.view.unbind(event);
+    }
+    this.view.bind(event, callback);
+}
+
+Rangebar.prototype.buildRangebar = function($range_view){
+    $range_view.addClass('range').addClass(this.direction).addClass('pointer');
+    $range_view.bind("click", (e) => {
+        this.pointToPos(this.relativePos(e));
+    }).bind("mousemove", (e) => {
+        const NO_CALLBACK = false; // don't call callback until drag finished
+        if(this.ondragged){
+            this.pointToPos(this.relativePos(e), NO_CALLBACK);
+        }
+    }).bind("mouseout", (e) => {
+        if(this.ondragged) {
+            this.pointToPos(this.relativePos(e));
+            this.ondragged = false;
+        }
+    });
+    let track = $('<div></div>').addClass('track');
+    track.append($('<div></div>').addClass('loaded_line')).append($('<div></div>').addClass('track_line'));
+    let point = $('<div></div>').addClass('point');
+    point.bind("mousedown", (e) => {
+        this.ondragged = true;
+    }).bind("mouseup", (e) => {
+        this.pointToPos(this.relativePos(e));
+        this.ondragged = false;
+    }).bind("mouseout", function(e){
+        if(this.ondragged) {
+            this.pointToPos(this.relativePos(e));
+            this.ondragged = false;
+        }
+    })
+    $range_view.append(track).append(point);
+    return $range_view;
+}
+
+Rangebar.prototype.pointToPos = function(p0, p1, p2){
+    let pos, value, need_callback;
     if(arguments.length == 1){
         pos = p0;
     }
     else if(arguments.length == 2){
         pos = p0;
-        needcallback = p1;
+        need_callback = p1;
     }
-    //用于pointto的调用
     else if(arguments.length == 3){
         pos = p0;
         value = p1;
-        needcallback = p2;
+        need_callback = p2;
     }
-    var point = this.el.children('.point');
+    let point = this.view.children('.point');
     this.setPointPos(pos);
     if(value === undefined || value === null){
-        this.value = this.postovalue(pos);
+        this.value = this.posToValue(pos);
     }
-    if(needcallback === undefined || callback){
-        this.el.trigger("valuechange", this.value);
+    if(need_callback === undefined || need_callback){
+        this.view.trigger("pointchange", this.value);
     }
 }
 Rangebar.prototype.setPointPos = function(pos){
-    var point = this.el.children('.point');
+    var point = this.view.children('.point');
     if(this.direction == "horizental") point.css('left', pos - point.width() / 2 + 'px');
     else point.css('top', pos - point.height() / 2 + 'px');
 }
 Rangebar.prototype.getWidgetLength = function(){
-    if(this.direction == "horizental") return this.el.width();
-    else return this.el.height();
-}
-Rangebar.prototype.pointto = function(value, needcallback){
-    this.value = value;
-    this.pointtoPos(this.valuetopos(value), value, needcallback);
+    if(this.direction == "horizental") return Math.floor(this.view.width());
+    else return Math.floor(this.view.height());
 }
 
-Rangebar.prototype.valuetopos = function(value){
+Rangebar.prototype.valueToPos = function(value){
     return Math.floor(value / this.range * this.getWidgetLength());
 }
 
-Rangebar.prototype.postovalue = function(pos){
-    return Math.floor(pos / this.getWidgetLength() * this.range) + this.min;
+Rangebar.prototype.posToValue = function(pos){
+    return Math.floor(Math.floor(pos) / this.getWidgetLength() * this.range) + this.min;
 }
 
 Rangebar.prototype.relativePos = function(e){
     var res = 0;
-    if(this.direction == "horizental") res = e.pageX - this.el.offset().left;
-    else res = e.pageY - this.el.offset().top;
-
+    if(this.direction == "horizental") res = e.pageX - this.view.offset().left;
+    else res = e.pageY - this.view.offset().top;
     return Math.max(Math.min(res, this.getWidgetLength()), 0);
 }
